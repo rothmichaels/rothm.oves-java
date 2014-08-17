@@ -1,5 +1,5 @@
 /*
- * AMaxObject.java
+ * msgfilter.java
  * 
  * Copyright (c) 2014 Roth Michaels. All rights reserved.
  *
@@ -33,74 +33,59 @@
  *
  * You must not remove this notice, or any other, from this software.
  * 
+ * 8/17/14
  */
-package rm.max;
 
+package rm;
+
+import com.cycling74.max.Atom;
+import com.cycling74.max.DataTypes;
 import com.cycling74.max.MaxObject;
 
 /**
+ * Object filters input to avoid repeated messages.
  * 
- *
- * @author Roth Michaels (<i><a href="mailto:roth@rothmichaels.us">roth@rothmichaels.us</a></i>)
- *
+ * @author Roth Michaels
  */
-public abstract class AMaxObject extends MaxObject {
-	public final class BoxSetup {
-		public int numInputs;
-		public int numOutputs;
-		public boolean infoOutlet;
+public class msgfilter extends MaxObject {
+
+	private String lastMessage;
+	private Atom[] lastArgs;
+	
+	public msgfilter() {
+		declareInlets(new int[] { DataTypes.ANYTHING });
+		declareOutlets(new int[] { DataTypes.ANYTHING });
+		createInfoOutlet(false);
 	}
-	
-	abstract void setupAttributes(Object[] attributes);
-	
-	public AMaxObject() {
-		super();
-	}
-	
-	public AMaxObject(int numInputs, int numOutputs) {
-		this(numInputs, numOutputs, false, null);
-	}
-	
-	public AMaxObject(int numInputs, int numOutputs, boolean infoOutlet) {
-		this(numInputs, numOutputs, infoOutlet, null);
-	}
-	
-	public AMaxObject(Object[] attributes) {
-		this(1, 1, false, attributes);
-	}
-	
-	public AMaxObject(int numInputs, int numOutputs, boolean infoOutlet, Object[] attributes) {
-		super();
-		
-		declareIO(numInputs, numOutputs);
-		createInfoOutlet(infoOutlet);
-		
-		if (attributes != null) {
-			setupAttributes(attributes);
+
+	/**
+	 * Takes message input and outputs the message if it is new.
+	 */
+	@Override
+	public void anything(String message, Atom[] args) {
+		synchronized(this) {
+			boolean sameMessage = false;
+			if (message.equals(lastMessage) && args.length == lastArgs.length) {
+				sameMessage = true;
+				for (int i = 0; i < args.length; ++i) {
+					if (!args[i].equals(lastArgs[i])) {
+						sameMessage = false;
+						break;
+					}
+				}
+			}
+			
+			if (sameMessage) {
+				outlet(0, message, args);
+			}
 		}
-		
-//		System.out.p
-		
-//		if (attributes != null) {
-//			for (Object attribute : attributes) {
-//				if (attribute instanceof String) {
-//					declareAttribute((String) attribute);
-//				} else if (attribute instanceof String[]) {
-//					final String[] declAttrArgs = (String[]) attribute;
-//					if (declAttrArgs.length == 3) {
-//						declareAttribute(declAttrArgs[0], declAttrArgs[1], declAttrArgs[2]);
-//					} else {
-//						System.out.println("wrong number of attribute args");
-//					}
-//				} else {
-//					System.out.println("incorrect object type to set attribute");
-//				}
-//			}
-//		}
 	}
-	/*
-	public void setupAttributes(Object[] attributes) {
-		System.out.println("superclass attribute setup called :(");
+	
+	/**
+	 * Reset the filter so that the next message will be output regardless of duplication.
+	 */
+	public void reset() {
+		lastMessage = null;
+		lastArgs = null;
 	}
-	*/
 }
