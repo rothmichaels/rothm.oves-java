@@ -1,5 +1,5 @@
 /*
- * msgfilter.java
+ * zap.java
  * 
  * Copyright (c) 2014 Roth Michaels. All rights reserved.
  *
@@ -38,56 +38,18 @@
 
 package rm;
 
-import com.cycling74.max.Atom;
 import com.cycling74.max.DataTypes;
 import com.cycling74.max.MaxObject;
 
-/**
- * Object filters input to avoid repeated messages.
- * 
- * @author Roth Michaels
- */
-public class msgfilter extends MaxObject {
-
-	private String lastMessage;
-	private Atom[] lastArgs;
-	
-	public msgfilter() {
-		declareInlets(new int[] { DataTypes.ANYTHING });
-		declareOutlets(new int[] { DataTypes.ANYTHING });
+public class zap extends MaxObject {
+	public zap() {
+		declareInlets(new int[]{ DataTypes.MESSAGE });
+		declareOutlets(new int[] {});
 		createInfoOutlet(false);
 	}
-
-	/**
-	 * Takes message input and outputs the message if it is new.
-	 */
-	@Override
-	public void anything(String message, Atom[] args) {
-		synchronized(this) {
-			boolean sameMessage = false;
-			if (message.equals(lastMessage) && args.length == lastArgs.length) {
-				sameMessage = true;
-				for (int i = 0; i < args.length; ++i) {
-					if (!args[i].equals(lastArgs[i])) {
-						sameMessage = false;
-						break;
-					}
-				}
-			}
-			
-			if (!sameMessage) {
-				lastMessage = message;
-				lastArgs = args;
-				outlet(0, message, args);
-			}
-		}
-	}
 	
-	/**
-	 * Reset the filter so that the next message will be output regardless of duplication.
-	 */
-	public void reset() {
-		lastMessage = null;
-		lastArgs = null;
+	public void bang() {
+		zap();
+		System.out.println("Zapped classloader.");
 	}
 }
